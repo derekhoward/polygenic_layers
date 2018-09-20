@@ -4,12 +4,11 @@ library(data.tree)
 # check working directory:
 # should be projects/polygenic_layers/R
 getwd()
-#
-setwd("~/projects/polygenic_layers/")
+setwd("~/projects/polygenic_layers/R")
 
 # set up directories/raw data
 # currently only setup for a single donor
-DATA_FOLDER <- file.path(getwd(), 'data/raw/allen_human_fetal_brain')
+DATA_FOLDER <- file.path(getwd(), '../data/raw/allen_human_fetal_brain')
 donors <- c('lmd_matrix_12566', 'lmd_matrix_12690', 'lmd_matrix_12840', 'lmd_matrix_14751')
 
 # get the fetal ontology as data.tree structure
@@ -63,7 +62,8 @@ for (donor in donors) {
       select(-c(structure_id, well_id, structure_acronym)) %>% 
       filter(!is.na(zone))
 
-  # should probably drop genes/columns that start with A_ here 
+  # drop rows where gene_symbols start with A_ 
+  gene_exp_long_annotated %<>% filter(!grepl('^A_', gene_symbol))
   
   # get the mean of gene expression values for each zone/layer
   zone_exp <- gene_exp_long_annotated %>% 
@@ -100,10 +100,6 @@ result <- cortical_zones_expression_matrix %>%
   map_df(rank)
 
 result$gene_symbol <- cortical_zones_expression_matrix$gene_symbol
-
-# somehow the following creates twice as many rows as it should?   
-#spread(cortical_zones_expression_matrix, key = zone, value = mean_zscore) %>% 
-#  select(-n_donors)
 
 #write_csv(result, './data/processed_data_final.csv')
 save(result, file='./processed_developmental_zones.Rdata')
