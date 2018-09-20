@@ -1,5 +1,5 @@
 library(shiny)
-#setwd('./R')
+
 source("./AUCFunction.R")
 source("./string_processing.R")
 
@@ -47,7 +47,7 @@ ui <- fluidPage(
 # Define server logic process and output top cortical layers/zones ----
 server <- function(input, output) {
   output$summary <- renderPrint({
-    cat(paste("cores set to", cores))
+    #cat(paste("cores set to", cores))
     cat("\nResults will load here when complete")
     cat("\n")
     print(gc())
