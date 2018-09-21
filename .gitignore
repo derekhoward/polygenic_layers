@@ -84,3 +84,4 @@ venv.bak/
 .mypy_cache/
 .Rproj.user
 *.Rproj
+processed_developmental_zones.Rdata
