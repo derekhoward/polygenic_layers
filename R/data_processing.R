@@ -1,4 +1,9 @@
-library(tidyverse)
+library(magrittr)
+library(readr)
+library(purrr)
+library(jsonlite)
+library(dplyr)
+library(tidyr)
 library(data.tree)
 
 # check working directory:
@@ -7,12 +12,11 @@ getwd()
 setwd("~/projects/polygenic_layers/R")
 
 # set up directories/raw data
-# currently only setup for a single donor
 DATA_FOLDER <- file.path(getwd(), '../data/raw/allen_human_fetal_brain')
+#DATA_FOLDER <- "/Users/lfrench/Desktop/data/Allen/prenatalMicroarray"
 donors <- c('lmd_matrix_12566', 'lmd_matrix_12690', 'lmd_matrix_12840', 'lmd_matrix_14751')
 
 # get the fetal ontology as data.tree structure
-library('jsonlite')
 onto_list <- fromJSON('../molecular_AN/data/fetal21ontology.json', simplifyDataFrame = FALSE)
 ontology <- as.Node(onto_list, mode='explicit', check='no-warn')
 
@@ -64,6 +68,7 @@ for (donor in donors) {
 
   # drop rows where gene_symbols start with A_ 
   gene_exp_long_annotated %<>% filter(!grepl('^A_', gene_symbol))
+  gene_exp_long_annotated %<>% filter(!grepl('^CUST_', gene_symbol))
   
   # get the mean of gene expression values for each zone/layer
   zone_exp <- gene_exp_long_annotated %>% 
