@@ -17,7 +17,7 @@ DATA_FOLDER <- file.path(getwd(), '../data/raw/allen_human_fetal_brain')
 donors <- c('lmd_matrix_12566', 'lmd_matrix_12690', 'lmd_matrix_12840', 'lmd_matrix_14751')
 
 # get the fetal ontology as data.tree structure
-onto_list <- fromJSON('../molecular_AN/data/fetal21ontology.json', simplifyDataFrame = FALSE)
+onto_list <- fromJSON('../../molecular_AN/data/fetal21ontology.json', simplifyDataFrame = FALSE)
 ontology <- as.Node(onto_list, mode='explicit', check='no-warn')
 
 # get list of structures we care about
@@ -32,12 +32,14 @@ get_zone <- function(node) {
 }
 transient_structures$Do(function(node) node$zone <- get_zone(node), filterFun = function(x) x$parent_structure_id == 10506)
 zone_markers <- ToDataFrameNetwork(transient_structures, 'name', 'zone', inheritFromAncestors = TRUE) %>% 
-  select(name, zone)
+  select(name, zone) %>% 
+  as_tibble() %>% 
+  filter(zone != 'callosal sling')
 
 # process each donor separately
 all_processed_sample_dfs <- list()
 for (donor in donors) {
-  #DONOR_FOLDER <- file.path(path=DATA_FOLDER, 'lmd_matrix_12566')#donor)
+  #DONOR_FOLDER <- file.path(path=DATA_FOLDER, 'lmd_matrix_12566')
   DONOR_FOLDER <- file.path(path=DATA_FOLDER, donor)
   samples_file <- list.files(path=DONOR_FOLDER, pattern="columns_metadata.csv", recursive = TRUE, full.names = TRUE)
   expression_file <- list.files(path=DONOR_FOLDER, pattern="expression_matrix.csv", recursive = TRUE, full.names = TRUE)
@@ -48,7 +50,7 @@ for (donor in donors) {
   # add a sample_id col to facilitate joining with exp
   samples$sample_id <- c(1:nrow(samples))
   # merge in zone markers, this also restricts samples to those of interest from "transient_structures" ontology
-  samples <- left_join(samples, zone_markers, by=c('structure_name' = 'name'))
+  samples <- inner_join(samples, zone_markers, by=c('structure_name' = 'name'))
   exp <- read_csv(file = expression_file, col_names = FALSE)
   names(exp) = c('probe_id', 1:(ncol(exp)-1))
   probes <- read_csv(file = probes_file)
