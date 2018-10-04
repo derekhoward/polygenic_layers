@@ -42,8 +42,10 @@ ui <- fluidPage(
           # Output: Verbatim text for data summary ----
           verbatimTextOutput("summary"),
           br(),
-          plotOutput("dotplot"),
+          #plotOutput("dotplot", hover='plot_hover'),
+          plotOutput("dotplot", brush='plot_brush'),
           br(),
+          verbatimTextOutput("info"),
            # Output: HTML table with requested number of observations ----
           dataTableOutput("view")
     )
@@ -92,6 +94,8 @@ server <- function(input, output) {
     #add descriptions
     table %<>% arrange(-AUROC)
     
+    selected_values <- tidy_expression %>% filter(gene_symbol %in% cleaned_gene_list)
+    
     output$summary <- renderPrint({
       #count of intersection of submitted genes with total gene list
       cat(paste("Time taken:", round(Sys.time() - start), "seconds"))
@@ -104,9 +108,15 @@ server <- function(input, output) {
     }, escape = FALSE)
     
     output$dotplot <- renderPlot({
-      selected_values <- tidy_expression %>% filter(gene_symbol %in% cleaned_gene_list)
+      #selected_values <- tidy_expression %>% filter(gene_symbol %in% cleaned_gene_list)
       ggplot(selected_values, aes(x=zones, y=expression)) +
         geom_dotplot(binaxis = "y", stackdir = "center")
+    })
+    
+    output$info <- renderPrint({
+     #nearPoints(selected_values, input$plot_brush, xvar = "zones", yvar = "expression")
+      brushedPoints(selected_values, brush = input$plot_brush, xvar = "zones", yvar = "expression")
+      # nearPoints() also works with hover and dblclick events
     })
   }
   )
