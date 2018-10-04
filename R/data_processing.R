@@ -101,12 +101,14 @@ cortical_zones_expression_matrix %<>%
             select(-n_donors) %>% 
             spread(key = zone, value = mean_zscore)
 
-result <- cortical_zones_expression_matrix %>% 
+cortical_zones_ranks <- cortical_zones_expression_matrix %>% 
   select(-gene_symbol) %>% 
   #map_df(desc) %>% 
   map_df(rank)
 
-result$gene_symbol <- cortical_zones_expression_matrix$gene_symbol
+cortical_zones_ranks$gene_symbol <- cortical_zones_expression_matrix$gene_symbol
 
-#write_csv(result, './data/processed_data_final.csv')
-save(result, file='./processed_developmental_zones.Rdata')
+save(cortical_zones_expression_matrix, file='../data/cortical_zones_expression_matrix.Rdata')
+#write_csv(cortical_zones_ranks, '../data/processed_data_final.csv')
+save(cortical_zones_ranks, file='../data/developmental_zones_ranks.Rdata')
+
