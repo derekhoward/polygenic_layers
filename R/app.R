@@ -1,10 +1,16 @@
 library(shiny)
-
+library(ggplot2)
 source("./AUCFunction.R")
 source("./string_processing.R")
 
-load('./processed_developmental_zones.Rdata', verbose=TRUE)
-unique_genes <- result$gene_symbol
+#loads ranked genes in different layers as 'cortical_zones_ranks'
+load('../data/developmental_zones_ranks.Rdata', verbose=TRUE)
+unique_genes <- cortical_zones_ranks$gene_symbol
+
+#loads zscored genes in different layers as 'cortical_zones_expression_matrix'
+load('../data/cortical_zones_expression_matrix.Rdata', verbose=TRUE)
+tidy_expression <- cortical_zones_expression_matrix %>% 
+  gather(key = zones, value = expression, -gene_symbol)
 
 apply_MWU <- function(column, targetIndices) {
   wilcox.test(column[targetIndices], column[!targetIndices], conf.int = F)$p.value
@@ -15,6 +21,7 @@ ui <- fluidPage(
   titlePanel("Polygenic tester for the developing human brain"),
   
   # Sidebar layout with input and output definitions ----
+  sidebarLayout(
     # Sidebar panel for inputs ----
     sidebarPanel(
       # Input: Selector for choosing dataset ----
@@ -22,24 +29,25 @@ ui <- fluidPage(
                     label = "Input your gene list:",
                     value = 'MC4R\nADORA1\nZFP179\nGABRB2\nSOX5\nELMO1\nEDIL3\nMGST3',
                     rows=7),
-      selectInput('species', 'Species:',
+      selectInput(inputId = 'species', 
+                  label = 'Species:',
                   choices=c('Human', 'Mouse')),
-      actionButton("submit", "Submit")
+      actionButton(inputId = "submit", 
+                   label = "Submit")
     ),
     
     # Main panel for displaying outputs ----
     mainPanel(
       div(id = "main",
-          
-      # Output: Verbatim text for data summary ----
-      verbatimTextOutput("summary"),
-      br(),
-      #plotOutput("plot"),
-      br(),
-      # Output: HTML table with requested number of observations ----
-      dataTableOutput("view")
-      
+          # Output: Verbatim text for data summary ----
+          verbatimTextOutput("summary"),
+          br(),
+          plotOutput("dotplot"),
+          br(),
+           # Output: HTML table with requested number of observations ----
+          dataTableOutput("view")
     )
+  )
   )
 )
 
@@ -63,13 +71,13 @@ server <- function(input, output) {
     print(paste0("Before time taken:", Sys.time() - start))
     
     #for indices - use dplyr for ease
-    forIndices <- as_tibble(result$gene_symbol)
+    forIndices <- as_tibble(cortical_zones_ranks$gene_symbol)
     names(forIndices) <- 'gene_symbol'
     forIndices %<>% mutate(isTargetGene = gene_symbol %in% cleaned_gene_list)
     targetIndices <- forIndices$isTargetGene
     
     # only columns from cortical zones remain in df
-    df <- result %>% 
+    df <- cortical_zones_ranks %>% 
       select(-gene_symbol)
     
     AUROC <- map_df(df, auroc_analytic, as.numeric(targetIndices))
@@ -94,6 +102,12 @@ server <- function(input, output) {
       table %<>% mutate(pValue = signif(pValue, digits=3), AUROC = signif(AUROC, digits=3), adjusted_P = signif(p.adjust(pValue), digits=3))
       table
     }, escape = FALSE)
+    
+    output$dotplot <- renderPlot({
+      selected_values <- tidy_expression %>% filter(gene_symbol %in% cleaned_gene_list)
+      ggplot(selected_values, aes(x=zones, y=expression)) +
+        geom_dotplot(binaxis = "y", stackdir = "center")
+    })
   }
   )
 }
