@@ -91,8 +91,9 @@ server <- function(input, output) {
     
     print(paste0("Wilcox time taken:", Sys.time() - start))
     
-    #add descriptions
+    #
     table %<>% arrange(-AUROC)
+    table %<>% mutate(pValue = signif(pValue, digits=3), AUROC = signif(AUROC, digits=3), adjusted_P = signif(p.adjust(pValue), digits=3))
     
     selected_values <- tidy_expression %>% filter(gene_symbol %in% cleaned_gene_list)
     
@@ -103,7 +104,6 @@ server <- function(input, output) {
     })
     
     output$view <- renderDataTable({
-      table %<>% mutate(pValue = signif(pValue, digits=3), AUROC = signif(AUROC, digits=3), adjusted_P = signif(p.adjust(pValue), digits=3))
       table
     }, escape = FALSE)
     
