@@ -42,12 +42,12 @@ ui <- fluidPage(
           # Output: Verbatim text for data summary ----
           verbatimTextOutput("summary"),
           br(),
+          dataTableOutput("view"),
+          br(),
           #plotOutput("dotplot", hover='plot_hover'),
           plotOutput("dotplot", brush='plot_brush'),
-          br(),
           verbatimTextOutput("info"),
-           # Output: HTML table with requested number of observations ----
-          dataTableOutput("view")
+          downloadButton(outputId = "download_data", label = "Download data")
     )
   )
   )
@@ -108,16 +108,23 @@ server <- function(input, output) {
     }, escape = FALSE)
     
     output$dotplot <- renderPlot({
-      #selected_values <- tidy_expression %>% filter(gene_symbol %in% cleaned_gene_list)
-      ggplot(selected_values, aes(x=zones, y=expression)) +
-        geom_dotplot(binaxis = "y", stackdir = "center")
+      if (length(cleaned_gene_list) > 20) {
+        ggplot(selected_values, aes(x=zones, y=expression)) +
+          geom_boxplot()
+      } else {
+        ggplot(selected_values, aes(x=zones, y=expression)) +
+          geom_dotplot(binaxis = "y", stackdir = "center")
+      }
     })
     
     output$info <- renderPrint({
-     #nearPoints(selected_values, input$plot_brush, xvar = "zones", yvar = "expression")
+      #nearPoints(selected_values, coordinfo = input$plot_hover, xvar = "zones", yvar = "expression")
       brushedPoints(selected_values, brush = input$plot_brush, xvar = "zones", yvar = "expression")
-      # nearPoints() also works with hover and dblclick events
     })
+    
+    output$download_data <- downloadHandler(filename = "polygenic_layers_AUC_results.csv", 
+                                            content = function(file) { write_csv(table, file) })
+      
   }
   )
 }
