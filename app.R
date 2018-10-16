@@ -10,7 +10,7 @@ apply_MWU <- function(column, targetIndices) {
 
 ui <- fluidPage(
   # App title ----
-  titlePanel("Polygenic tester for the developing human brain"),
+  titlePanel("Polygenic tester for the developing cortical layers"),
   
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
@@ -33,14 +33,20 @@ ui <- fluidPage(
       ),
       selectInput(
         inputId = 'species',
-        label = 'Species:',
+        label = 'Species of input genes:',
         choices = c('Human', 'Mouse', 'Rhesus Macaque')
       ),
       actionButton(inputId = "submit",
                    label = "Submit"),
       br(),
       br(),
-      downloadButton(outputId = "download_data", label = "Download results as .csv")
+      downloadButton(outputId = "download_data", label = "Download results as .csv"),
+      hr(),
+      tags$b("Data was made available by the Allen Institute for Brain Science and is available from: "),
+      br(),
+      tags$a(href="http://www.brainspan.org/static/download.html", "Developing Human Brain Atlas"),
+      br(),
+      tags$a(href="http://www.blueprintnhpatlas.org/static/download", "Cortical layers from Developing Non-human primate (NHP) Atlas")
     ),
     
     # Main panel for displaying outputs ----
