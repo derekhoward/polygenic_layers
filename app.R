@@ -10,7 +10,7 @@ apply_MWU <- function(column, targetIndices) {
 
 ui <- fluidPage(
   # App title ----
-  titlePanel("Polygenic tester for the developing cortical layers"),
+  titlePanel("Polygenic tester for developing cortical layers"),
   
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
@@ -87,15 +87,13 @@ server <- function(input, output) {
       load('./data/processed/developing_cortical_zones_ranks.Rdata', verbose = TRUE)
       unique_genes <- cortical_zones_ranks$gene_symbol
       paste('loaded data')
-      load('./data/processed/developing_cortical_zones_expression_matrix.Rdata',
-           verbose = TRUE)
+      load('./data/processed/developing_cortical_zones_expression_matrix.Rdata', verbose = TRUE)
       tidy_expression <- cortical_zones_expression_matrix %>%
         gather(key = zones, value = expression,-gene_symbol)
       
       #target_gene_symbols <- 'Human'
       
-      cleaned_gene_list <-
-        convert2human(input_genes = cleaned_gene_list, in_species = input$species)
+      cleaned_gene_list <- convert2human(input_genes = cleaned_gene_list, in_species = input$species)
       
     } else {
       load('./data/processed/NHP_cortical_zones_ranks.Rdata', verbose = TRUE)
@@ -136,34 +134,40 @@ server <- function(input, output) {
     wilcox_tests <- map_df(df, apply_MWU, targetIndices)
     
     # group results together in a single table
-    table <-
-      bind_cols(gather(AUROC, key = zone, value = AUROC),
-                gather(wilcox_tests, value = pValue)) %>%
+    table <- bind_cols(gather(AUROC, key = zone, value = AUROC), 
+                       gather(wilcox_tests, value = pValue)) %>%
       select(-key)
     
     print(paste0("Wilcox time taken:", Sys.time() - start))
     
     # these are the values for the results table
     table %<>% arrange(-AUROC)
-    table %<>% mutate(
-      pValue = signif(pValue, digits = 3),
-      AUROC = signif(AUROC, digits = 3),
-      adjusted_P = signif(p.adjust(pValue), digits = 3)
-    )
+    table %<>% mutate(pValue = signif(pValue, digits = 3), 
+                      AUROC = signif(AUROC, digits = 3),
+                      adjusted_P = signif(p.adjust(pValue), digits = 3))
+    
     #table$order
-    x <- tibble(order = 1:7, zone = c("ventricular zone", "subventricular zone", "intermediate zone", "subplate zone", "cortical plate",
+    if (input$dataset == 'Cortical layers from Developing Human Brain Atlas') {
+      x <- tibble(order = 1:7, zone = c("ventricular zone", "subventricular zone", "intermediate zone", "subplate zone", "cortical plate",
                                       "marginal zone","subpial granular zone"))
+    } else {
+      x <- tibble(order = 1:24, zone = c("ventricular zone", "ventricular zone (inner)", "ventricular zone (outer)",
+                                        "subventricular zone", "subventricular zone (inner)", "subventricular zone (outer)",
+                                        "intermediate zone", "inner fiber zone", "outer fiber zone", "transitory migratory zone",
+                                        "subplate zone", "cortical plate", "cortical plate (inner)", "cortical plate (outer)",
+                                        "marginal zone", "subpial granular zone", "white matter", "layer I", "layer II", 
+                                        "layer II/III", "layer III", "layer IV", "layer V", "layer VI"))
+    }
     table <- inner_join(table, x, by = 'zone')
     
     selected_values <- reactive({
       req(cleaned_gene_list)
-      selected_values <-
-        tidy_expression %>% filter(gene_symbol %in% cleaned_gene_list)
+      selected_values <- tidy_expression %>% filter(gene_symbol %in% cleaned_gene_list)
       if (input$dataset == 'Cortical layers from Developing Human Brain Atlas') {
         selected_values %<>% mutate(zones = factor(zones, levels = c("ventricular zone", "subventricular zone", "intermediate zone", "subplate zone",
                                                                      "cortical plate", "marginal zone", "subpial granular zone")))
       } else {
-        # input$dataset == 'Cortical layers from Developing Non-human primate (NHP) Atlas'
+        #input$dataset == 'Cortical layers from Developing Non-human primate (NHP) Atlas'
         selected_values %<>% mutate(zones = factor(zones, levels = c("ventricular zone", "ventricular zone (inner)", "ventricular zone (outer)",
                                                                      "subventricular zone", "subventricular zone (inner)", "subventricular zone (outer)",
                                                                      "intermediate zone", "inner fiber zone", "outer fiber zone", "transitory migratory zone",
