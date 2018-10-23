@@ -156,7 +156,7 @@ server <- function(input, output) {
     if (input$dataset == 'Cortical layers from Developing Human Brain Atlas') {
       zone_order <-c("ventricular zone", "subventricular zone", "intermediate zone", "subplate zone", "cortical plate",
                      "marginal zone","subpial granular zone")
-      x <- tibble(order = 1:7, zone = zone_order)
+      x <- tibble(laminar_order = 1:7, zone = zone_order)
     } else {
       zone_order <- c("ventricular zone (inner)", "ventricular zone","ventricular zone (outer)",
                       "subventricular zone (inner)", "subventricular zone",  "subventricular zone (outer)",
@@ -164,7 +164,7 @@ server <- function(input, output) {
                       "subplate", "cortical plate (inner)", "cortical plate",  "cortical plate (outer)",
                       "marginal zone", "white matter", "layer I", "layer II", 
                       "layer II/III", "layer III", "layer IV", "layer V", "layer VI")
-      x <- tibble(order = 1:length(zone_order), zone = zone_order)
+      x <- tibble(laminar_order = 1:length(zone_order), zone = zone_order)
     }
     table <- inner_join(table, x, by = 'zone')
 
