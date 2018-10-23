@@ -1,6 +1,12 @@
 library(shiny)
+library(ggplot2)
+library(magrittr)
 library(plotly)
 library(tibble)
+library(tidyr)
+library(dplyr)
+library(purrr)
+library(shinyjs)
 source("./AUCFunction.R")
 source("./string_processing.R")
 
@@ -9,6 +15,8 @@ apply_MWU <- function(column, targetIndices) {
 }
 
 ui <- fluidPage(
+  shinyjs::useShinyjs(),
+  tags$head(includeHTML("google-analytics.html")),
   # App title ----
   titlePanel("Polygenic tester for developing cortical layers"),
   
@@ -28,8 +36,8 @@ ui <- fluidPage(
       textAreaInput(
         inputId = "genelist",
         label = "Input your gene list:",
-        value = 'MC4R\nADORA1\nZFP179\nGABRB2\nSOX5\nELMO1\nEDIL3\nMGST3',
-        rows = 7
+        value = 'THRA\nRTN1\nTUBA1A\nSTMN2\nCRMP1\nTUBB3\nISLR2',
+        rows = 10
       ),
       selectInput(
         inputId = 'species',
@@ -69,11 +77,10 @@ ui <- fluidPage(
 # Define server logic process and output top cortical layers/zones ----
 server <- function(input, output) {
   output$summary <- renderPrint({
-    #cat(paste("cores set to", cores))
     cat("\nResults will load here when complete")
     cat("\n")
-    print(gc())
-    print(Sys.info()['nodename'])
+    #print(gc())
+    #print(Sys.info()['nodename'])
   })
   
   observeEvent(input$submit, {
@@ -129,7 +136,6 @@ server <- function(input, output) {
     df <- cortical_zones_ranks %>%
       select(-gene_symbol)
     
-    #AUROC <- map_df(df, auroc_analytic, as.numeric(targetIndices))
     AUROC <- map_df(df, auroc_analytic, targetIndices)
     wilcox_tests <- map_df(df, apply_MWU, targetIndices)
     
@@ -197,6 +203,7 @@ server <- function(input, output) {
         p <- p + geom_jitter(width = 0.1)
       }
       p <- p + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 0))
+      p <- p + geom_hline(yintercept = 0, color='darkgrey', size=0.4)
       ggplotly(p) #%>% layout(dragmode = "select")
     })
     

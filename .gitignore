@@ -85,3 +85,5 @@ venv.bak/
 .Rproj.user
 *.Rproj
 processed_developmental_zones.Rdata
+rsconnect
+.Rhistory
