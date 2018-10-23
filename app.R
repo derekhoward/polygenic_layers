@@ -148,33 +148,24 @@ server <- function(input, output) {
     
     #table$order
     if (input$dataset == 'Cortical layers from Developing Human Brain Atlas') {
-      x <- tibble(order = 1:7, zone = c("ventricular zone", "subventricular zone", "intermediate zone", "subplate zone", "cortical plate",
-                                      "marginal zone","subpial granular zone"))
+      zone_order <-c("ventricular zone", "subventricular zone", "intermediate zone", "subplate zone", "cortical plate",
+                     "marginal zone","subpial granular zone")
+      x <- tibble(order = 1:7, zone = zone_order)
     } else {
-      x <- tibble(order = 1:24, zone = c("ventricular zone", "ventricular zone (inner)", "ventricular zone (outer)",
-                                        "subventricular zone", "subventricular zone (inner)", "subventricular zone (outer)",
-                                        "intermediate zone", "inner fiber zone", "outer fiber zone", "transitory migratory zone",
-                                        "subplate zone", "cortical plate", "cortical plate (inner)", "cortical plate (outer)",
-                                        "marginal zone", "subpial granular zone", "white matter", "layer I", "layer II", 
-                                        "layer II/III", "layer III", "layer IV", "layer V", "layer VI"))
+      zone_order <- c("ventricular zone (inner)", "ventricular zone","ventricular zone (outer)",
+                      "subventricular zone (inner)", "subventricular zone",  "subventricular zone (outer)",
+                      "intermediate zone", "inner fiber zone", "outer fiber zone", "transitory migratory zone",
+                      "subplate zone", "cortical plate (inner)", "cortical plate",  "cortical plate (outer)",
+                      "marginal zone", "subpial granular zone", "white matter", "layer I", "layer II", 
+                      "layer II/III", "layer III", "layer IV", "layer V", "layer VI")
+      x <- tibble(order = 1:24, zone = zone_order)
     }
     table <- inner_join(table, x, by = 'zone')
-    
+
     selected_values <- reactive({
       req(cleaned_gene_list)
       selected_values <- tidy_expression %>% filter(gene_symbol %in% cleaned_gene_list)
-      if (input$dataset == 'Cortical layers from Developing Human Brain Atlas') {
-        selected_values %<>% mutate(zones = factor(zones, levels = c("ventricular zone", "subventricular zone", "intermediate zone", "subplate zone",
-                                                                     "cortical plate", "marginal zone", "subpial granular zone")))
-      } else {
-        #input$dataset == 'Cortical layers from Developing Non-human primate (NHP) Atlas'
-        selected_values %<>% mutate(zones = factor(zones, levels = c("ventricular zone", "ventricular zone (inner)", "ventricular zone (outer)",
-                                                                     "subventricular zone", "subventricular zone (inner)", "subventricular zone (outer)",
-                                                                     "intermediate zone", "inner fiber zone", "outer fiber zone", "transitory migratory zone",
-                                                                     "subplate zone", "cortical plate", "cortical plate (inner)", "cortical plate (outer)",
-                                                                     "marginal zone", "subpial granular zone", "white matter", "layer I", "layer II", 
-                                                                     "layer II/III", "layer III", "layer IV", "layer V", "layer VI")))
-      }
+      selected_values %<>% mutate(zones = factor(zones, levels = zone_order))
     })
     
     # these are the values used for the plot
