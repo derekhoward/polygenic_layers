@@ -155,10 +155,10 @@ server <- function(input, output) {
       zone_order <- c("ventricular zone (inner)", "ventricular zone","ventricular zone (outer)",
                       "subventricular zone (inner)", "subventricular zone",  "subventricular zone (outer)",
                       "intermediate zone", "inner fiber zone", "outer fiber zone", "transitory migratory zone",
-                      "subplate zone", "cortical plate (inner)", "cortical plate",  "cortical plate (outer)",
-                      "marginal zone", "subpial granular zone", "white matter", "layer I", "layer II", 
+                      "subplate", "cortical plate (inner)", "cortical plate",  "cortical plate (outer)",
+                      "marginal zone", "white matter", "layer I", "layer II", 
                       "layer II/III", "layer III", "layer IV", "layer V", "layer VI")
-      x <- tibble(order = 1:24, zone = zone_order)
+      x <- tibble(order = 1:length(zone_order), zone = zone_order)
     }
     table <- inner_join(table, x, by = 'zone')
 
@@ -188,22 +188,16 @@ server <- function(input, output) {
     }, escape = FALSE)
     
     output$dotplot <- renderPlotly({
+      #base plot
+      p <- ggplot(selected_values(), aes(x = zones, y = expression, names=gene_symbol))
+      #figure depends on size
       if (length(cleaned_gene_list) > 20) {
-        p <- ggplot(selected_values(), aes(x = zones, y = expression, names=gene_symbol)) +
-          geom_boxplot(outlier.shape = NA) +
-          geom_jitter(alpha = 0.25, width = 0.1) +
-          theme(axis.text.x = element_text(angle = 45, hjust = 0))
-        
-        ggplotly(p) #%>% layout(dragmode = "select")
-        
+        p <-  p + geom_boxplot(outlier.shape = NA) + geom_jitter(alpha = 0.25, width = 0.1)
       } else {
-        p <- ggplot(selected_values(), aes(x = zones, y = expression, names=gene_symbol)) +
-          #geom_dotplot(binaxis = "y", stackdir = "center")
-          geom_jitter(width = 0.1) +
-          theme(axis.text.x = element_text(angle = 45, hjust = 0))
-        
-        ggplotly(p) #%>% layout(dragmode = "select")
+        p <- p + geom_jitter(width = 0.1)
       }
+      p <- p + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 0))
+      ggplotly(p) #%>% layout(dragmode = "select")
     })
     
     output$download_data <-
