@@ -13,7 +13,7 @@ setwd("~/projects/polygenic_layers/")
 
 # set up directories/raw data
 DATA_FOLDER <- file.path(getwd(), './data/raw/allen_human_fetal_brain')
-#DATA_FOLDER <- "/Users/lfrench/Desktop/data/Allen/prenatalMicroarray"
+
 donors <-
   c('lmd_matrix_12566',
     'lmd_matrix_12690',
@@ -116,6 +116,7 @@ cortical_zones_ranks <- cortical_zones_expression_matrix %>%
 cortical_zones_ranks$gene_symbol <- cortical_zones_expression_matrix$gene_symbol
 
 ## 
+dir.create("./data/processed")
 write_csv(cortical_zones_expression_matrix, './data/processed/developing_cortical_zones_expression_matrix.csv')
 save(cortical_zones_expression_matrix, file = './data/processed/developing_cortical_zones_expression_matrix.Rdata')
 
