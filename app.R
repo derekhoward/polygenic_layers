@@ -189,7 +189,7 @@ server <- function(input, output) {
     
     output$dotplot <- renderPlotly({
       if (length(cleaned_gene_list) > 20) {
-        p <- ggplot(selected_values(), aes(x = zones, y = expression)) +
+        p <- ggplot(selected_values(), aes(x = zones, y = expression, names=gene_symbol)) +
           geom_boxplot(outlier.shape = NA) +
           geom_jitter(alpha = 0.25, width = 0.1) +
           theme(axis.text.x = element_text(angle = 45, hjust = 0))
@@ -197,7 +197,7 @@ server <- function(input, output) {
         ggplotly(p) #%>% layout(dragmode = "select")
         
       } else {
-        p <- ggplot(selected_values(), aes(x = zones, y = expression)) +
+        p <- ggplot(selected_values(), aes(x = zones, y = expression, names=gene_symbol)) +
           #geom_dotplot(binaxis = "y", stackdir = "center")
           geom_jitter(width = 0.1) +
           theme(axis.text.x = element_text(angle = 45, hjust = 0))
