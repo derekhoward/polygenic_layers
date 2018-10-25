@@ -49,12 +49,17 @@ expression %<>% select_if(~sum(!is.na(.)) > 0)
 names(expression) = c('probe_id', 1:(ncol(expression)-1))
 probes <- read_csv(file = file.path(DATA_FOLDER, 'lmd_expression_matrix_2014-03-06', 'rows_metadata.csv'))
 # remove parens() from beginning and end of gene symbols, ex: '(A1BG)' --> 'A1BG' 
-probes$gene_symbol <- str_replace(probes$gene_symbol, "(^\\()", "")
-probes$gene_symbol <- str_replace(probes$gene_symbol, "(\\)$)", "")
-#probes %>% filter(str_detect(gene_symbol, "(^\\()"))
+
+#probes$gene_symbol <- str_replace(probes$gene_symbol, "(^\\()", "")
+#probes$gene_symbol <- str_replace(probes$gene_symbol, "(\\)$)", "")
+#remove paren probes
+probes %<>% filter(!str_detect(gene_symbol, "(^\\()"))
 
 # merge in zone markers, this also restricts samples to those of interest from the ontology
 samples <- inner_join(samples, zone_markers, by=c('structure_name' = 'name'))
+
+#only use first to agepoints
+samples %<>% filter(age %in% c("E40", "E50"))
 
 # merge probe info to gene expression
 samples_exp <- left_join(expression, probes, by=c('probe_id' = 'row_num'))
