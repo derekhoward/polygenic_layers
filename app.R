@@ -165,7 +165,7 @@ server <- function(input, output) {
                       "marginal zone", "white matter", "layer I", "layer II", 
                       "layer II/III", "layer III", "layer IV", "layer V", "layer VI")
       x <- tibble(laminar_order = 1:length(zone_order), zone = zone_order)
-    }
+   }
     table <- inner_join(table, x, by = 'zone')
 
     selected_values <- reactive({

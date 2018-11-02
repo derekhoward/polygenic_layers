@@ -39,31 +39,37 @@ zones_to_drop <- c("dorsolateral prefrontal cortex (areas 9 and 46)", "medial or
                    "caudal orbital frontal cortex (area 13)", "medial frontal cortex (areas 24, 25 and 32)",
                    "rostral cingulate cortex (areas 24 and 32)", "occipital cortex")
 
+#zones_to_drop2 <- c("layer I", "layer II", "layer II/III", "layer III", "layer IV", "layer V", "layer VI" )
+
 zone_markers %<>% filter(!zone %in% zones_to_drop)
+#zone_markers %<>% filter(!zone %in% zones_to_drop2)
+
 
 ## Read in data
 samples <- read_csv(file = file.path(DATA_FOLDER, 'lmd_expression_matrix_2014-03-06', 'columns_metadata.csv'))
 expression <- read_csv(file = file.path(DATA_FOLDER, 'lmd_expression_matrix_2014-03-06', 'expression_matrix.csv'), col_names = F)
-# remove columns which have NA for all expression values
-expression %<>% select_if(~sum(!is.na(.)) > 0)
 names(expression) = c('probe_id', 1:(ncol(expression)-1))
 probes <- read_csv(file = file.path(DATA_FOLDER, 'lmd_expression_matrix_2014-03-06', 'rows_metadata.csv'))
-# remove parens() from beginning and end of gene symbols, ex: '(A1BG)' --> 'A1BG' 
 
-#probes$gene_symbol <- str_replace(probes$gene_symbol, "(^\\()", "")
-#probes$gene_symbol <- str_replace(probes$gene_symbol, "(\\)$)", "")
+# remove parens() from beginning and end of gene symbols, ex: '(A1BG)' --> 'A1BG' 
+probes$gene_symbol <- str_replace(probes$gene_symbol, "(^\\()", "")
+probes$gene_symbol <- str_replace(probes$gene_symbol, "(\\)$)", "")
 #remove paren probes
-probes %<>% filter(!str_detect(gene_symbol, "(^\\()"))
+#probes %<>% filter(!str_detect(gene_symbol, "(^\\()"))
 
 # merge in zone markers, this also restricts samples to those of interest from the ontology
 samples <- inner_join(samples, zone_markers, by=c('structure_name' = 'name'))
 
 #only use first to agepoints
-samples %<>% filter(age %in% c("E40", "E50"))
+#samples %<>% filter(age %in% c("E40", "E50"))
+
 
 # merge probe info to gene expression
 samples_exp <- left_join(expression, probes, by=c('probe_id' = 'row_num'))
 dim(samples_exp)
+
+# remove columns which have NA for all expression values
+samples_exp %<>% select_if(~sum(!is.na(.)) > 0)
 
 # melt samples_exp and merge in samples info
 # generates a tidy tibble with 32480 expression values per sample (915 samples of interest), along with metadata (sample_id, donor_id, age, structure/zone sampled)
@@ -78,21 +84,22 @@ dim(gene_exp_long_annotated)
 
 # get meanExp by gene for each donor
 # then, get ranking of genes in zones
-# finally, get mean zscore across donors within zones
+# finally, get mean zscore across donors 
 gene_exp_long_annotated %<>% 
   group_by(donor_id, zone, gene_symbol) %>% 
-  summarise(meanExp = mean(expression)) %>% 
+  summarise(meanExp = mean(expression, na.rm = T)) %>% 
   group_by(donor_id, zone) %>% 
   mutate(ranking = rank(meanExp)) %>% 
-  #group_by(zone, gene_symbol) %>% 
   group_by(gene_symbol) %>%
-  mutate(zscore = (ranking - mean(ranking)) / sd(ranking))
+  mutate(zscore = (ranking - mean(ranking, na.rm = T)) / sd(ranking, na.rm = T))
 dim(gene_exp_long_annotated)
+
+#gene_exp_long_annotated %<>% filter(!is.na(meanExp))
 
 cortical_zones_expression_matrix <- gene_exp_long_annotated %>% 
   select(-meanExp, -ranking) %>% 
   group_by(zone, gene_symbol) %>% 
-  summarise(mean_zscore = mean(zscore), n_donors = n_distinct(donor_id))
+  summarise(mean_zscore = mean(zscore, na.rm = T), n_donors = n_distinct(donor_id))
 
 cortical_zones_expression_matrix %<>% 
   select(-n_donors) %>% 
@@ -111,5 +118,4 @@ write_csv(NHP_cortical_zones_expression_matrix , './data/processed/NHP_cortical_
 write_csv(NHP_cortical_zones_ranks , './data/processed/NHP_cortical_zones_ranks.csv')
 save(NHP_cortical_zones_expression_matrix, file='./data/processed/NHP_cortical_zones_expression_matrix.Rdata')
 save(NHP_cortical_zones_ranks, file='./data/processed/NHP_cortical_zones_ranks.Rdata')
-
 
