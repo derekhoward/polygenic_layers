@@ -48,40 +48,49 @@ zone_markers %<>% filter(!zone %in% zones_to_drop)
 ## Read in data
 samples <- read_csv(file = file.path(DATA_FOLDER, 'lmd_expression_matrix_2014-03-06', 'columns_metadata.csv'))
 expression <- read_csv(file = file.path(DATA_FOLDER, 'lmd_expression_matrix_2014-03-06', 'expression_matrix.csv'), col_names = F)
-names(expression) = c('probe_id', 1:(ncol(expression)-1))
+colnames(expression) = c('probe_id', 1:(ncol(expression)-1))
+
+#only 129 line up
+sum(expression$probe_id == 1:(nrow(expression)))
+#solution: don't use that first column
+expression$probe_id <- 1:(nrow(expression))
+
 probes <- read_csv(file = file.path(DATA_FOLDER, 'lmd_expression_matrix_2014-03-06', 'rows_metadata.csv'))
 
+probes %<>% filter(!is.na(gene_symbol))
 # remove parens() from beginning and end of gene symbols, ex: '(A1BG)' --> 'A1BG' 
-probes$gene_symbol <- str_replace(probes$gene_symbol, "(^\\()", "")
-probes$gene_symbol <- str_replace(probes$gene_symbol, "(\\)$)", "")
+#probes$gene_symbol <- str_replace(probes$gene_symbol, "(^\\()", "")
+#probes$gene_symbol <- str_replace(probes$gene_symbol, "(\\)$)", "")
 #remove paren probes
-#probes %<>% filter(!str_detect(gene_symbol, "(^\\()"))
+probes %<>% filter(!str_detect(gene_symbol, "(^\\()"))
 
 # merge in zone markers, this also restricts samples to those of interest from the ontology
 samples <- inner_join(samples, zone_markers, by=c('structure_name' = 'name'))
 
 #only use first to agepoints
-#samples %<>% filter(age %in% c("E40", "E50"))
+samples %<>% filter(age %in% c("E40", "E50"))
 
 
 # merge probe info to gene expression
-samples_exp <- left_join(expression, probes, by=c('probe_id' = 'row_num'))
+samples_exp <- left_join(probes, expression, by=c('row_num' = 'probe_id')) %>% rename(probe_id = row_num)
 dim(samples_exp)
 
 # remove columns which have NA for all expression values
+#samples_exp %>% select_if(~sum(is.na(.)) > 0)
 samples_exp %<>% select_if(~sum(!is.na(.)) > 0)
+#as.data.frame(samples_exp[1,])
 
 # melt samples_exp and merge in samples info
 # generates a tidy tibble with 32480 expression values per sample (915 samples of interest), along with metadata (sample_id, donor_id, age, structure/zone sampled)
 gene_exp_long_annotated <- samples_exp %>% 
   select(-c(gene_id, probe_name, gene_name, entrez_id)) %>% 
   # convert = TRUE is required to convert sample_id to numeric data type
-  gather(key=sample_id, value=expression, -c(gene_symbol, probe_id), convert=TRUE) %>% 
+  gather(key=sample_id, value=expression, -gene_symbol, -probe_id, convert=TRUE) %>% 
   inner_join(samples, by=c('sample_id' = 'column_num')) %>% 
-  select(-c(structure_id, well_id, structure_acronym)) %>% 
-  filter(!is.na(gene_symbol))
-dim(gene_exp_long_annotated)
+  select(-c(structure_id, well_id, structure_acronym)) 
 
+dim(gene_exp_long_annotated)
+gene_exp_long_annotated %>% filter(gene_symbol == "DAAM1", structure_name == "ventricular zone of V1") #spot check
 # get meanExp by gene for each donor
 # then, get ranking of genes in zones
 # finally, get mean zscore across donors 

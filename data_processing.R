@@ -54,24 +54,24 @@ for (donor in donors) {
   samples <- read_csv(file = samples_file)
   # add a sample_id col to facilitate joining with exp
   samples$sample_id <- c(1:nrow(samples))
-  # merge in zone markers, this also restricts samples to those of interest from "transient_structures" ontology
-  samples <- inner_join(samples, zone_markers, by = c('structure_name' = 'name'))
+  # merge in zone markers, doesn't restrict to those with zone markers
+  samples <- left_join(samples, zone_markers, by = c('structure_name' = 'name'))
   exp <- read_csv(file = expression_file, col_names = FALSE)
   names(exp) = c('probe_id', 1:(ncol(exp) - 1))
   probes <- read_csv(file = probes_file)
   
   # merge probe info to gene expression
-  annotated_sample_exp <- left_join(exp, probes, by = c('probe_id' = 'probeset_id'))
+  annotated_sample_exp <- right_join(probes, exp, by = c( 'probeset_id' = 'probe_id'))
   dim(annotated_sample_exp)
   
   # melt annotated_sample_exp and merge in samples info
   gene_exp_long_annotated <- annotated_sample_exp %>%
     select(-c(probeset_name, gene_id, gene_name, entrez_id, chromosome)) %>%
     # convert = TRUE is required to convert sample_id to numeric data type
-    gather(key = sample_id, value = expression,-c(gene_symbol, probe_id), convert = TRUE) %>%
+    gather(key = sample_id, value = expression, -gene_symbol, -probeset_id, convert = TRUE) %>%
     left_join(samples, by = 'sample_id') %>%
     #select(-c(structure_id, well_id, structure_acronym)) %>%
-    select(-c(structure_id, well_id)) %>%
+    select(-structure_id, -well_id) %>%
     filter(!is.na(zone))
   
   # drop rows where gene_symbols start with A_

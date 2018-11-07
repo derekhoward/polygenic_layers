@@ -158,12 +158,19 @@ server <- function(input, output) {
                      "marginal zone","subpial granular zone")
       x <- tibble(laminar_order = 1:7, zone = zone_order)
     } else {
-      zone_order <- c("ventricular zone (inner)", "ventricular zone","ventricular zone (outer)",
-                      "subventricular zone (inner)", "subventricular zone",  "subventricular zone (outer)",
-                      "intermediate zone", "inner fiber zone", "outer fiber zone", "transitory migratory zone",
-                      "subplate", "cortical plate (inner)", "cortical plate",  "cortical plate (outer)",
-                      "marginal zone", "white matter", "layer I", "layer II", 
-                      "layer II/III", "layer III", "layer IV", "layer V", "layer VI")
+      #from Blueprint documentation: http://download.alleninstitute.org/nhp/Prenatal_Macaque_LMD_Microarray/neuroanatomical_guides_for_LMD_sampling/V1/
+      #The layers annotated for LMD are indicated in the right panel and include marginal zone (mz), layer 2 (2), layer 2/3 (2/3), layer 3 (3), 
+      zone_order <- c("white matter", "marginal zone", "layer I", "layer II", "layer II/III", "layer III", 
+                      #outer cortical plate (cpo), layer 4 (4), layer 4A (4A), layer 4B (4B), layer 4Ca (4Ca), layer 4Cb (4Cb), layer 5 (5), layer 6 (6), cortical plate (cp), 
+                      "cortical plate (outer)",  "layer IV", "layer V", "layer VI", "cortical plate", 
+                      #inner cortical plate (cpi), subplate (sp), intermediate zone (iz), intermediate cell dense zone (icd), transitory migratory zone (tmz), 
+                      "cortical plate (inner)","subplate","intermediate zone","transitory migratory zone", 
+                      #outer fiber (plexiform) zone (ofz), subventricular zone (sz), outer subventricular zone (szo), inner fiber (plexiform) zone (ifz), 
+                      "outer fiber zone","subventricular zone","subventricular zone (outer)", "inner fiber zone", 
+                      #inner subventricular zone (szi), outer ventricular zone (vzo), inner ventricular zone (vzi), and ventricular zone (vz). 
+                      "subventricular zone (inner)","ventricular zone (outer)","ventricular zone (inner)", "ventricular zone")
+      zone_order <- rev(zone_order) #reverse so it lines up with human direction
+      
       x <- tibble(laminar_order = 1:length(zone_order), zone = zone_order)
    }
     table <- inner_join(table, x, by = 'zone')
