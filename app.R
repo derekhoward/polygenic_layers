@@ -1,3 +1,4 @@
+library(here)
 library(shiny)
 library(ggplot2)
 library(magrittr)
@@ -38,6 +39,12 @@ ui <- fluidPage(
         label = "Input your gene list:",
         value = 'THRA\nRTN1\nTUBA1A\nSTMN2\nCRMP1\nTUBB3\nISLR2',
         rows = 10
+      ),
+      textAreaInput(
+        inputId = "background_genelist",
+        label = "Background gene list (optional):",
+        value = '',
+        rows = 2
       ),
       selectInput(
         inputId = 'species',
@@ -88,35 +95,43 @@ server <- function(input, output) {
     
     cleaned_gene_list <-
       isolate(process_input_genes(input$genelist))
+    background_cleaned_gene_list <- isolate(process_input_genes(input$background_genelist))
     
     # load reference data
     if (input$dataset == 'Cortical layers from Developing Human Brain Atlas') {
-      load('./data/processed/developing_cortical_zones_ranks.Rdata', verbose = TRUE)
+      load(here("data","processed", "developing_cortical_zones_ranks.Rdata"), verbose = TRUE)
       unique_genes <- cortical_zones_ranks$gene_symbol
       paste('loaded data')
-      load('./data/processed/developing_cortical_zones_expression_matrix.Rdata', verbose = TRUE)
+      load(here("data","processed", "developing_cortical_zones_expression_matrix.Rdata"), verbose = TRUE)
       tidy_expression <- cortical_zones_expression_matrix %>%
         gather(key = zones, value = expression,-gene_symbol)
       
       #target_gene_symbols <- 'Human'
       
       cleaned_gene_list <- convert2human(input_genes = cleaned_gene_list, in_species = input$species)
+      background_cleaned_gene_list <- convert2human(input_genes = background_cleaned_gene_list, in_species = input$species)
       
     } else {
-      load('./data/processed/NHP_cortical_zones_ranks.Rdata', verbose = TRUE)
+      load(here("data","processed", "NHP_cortical_zones_ranks.Rdata"), verbose = TRUE)
       cortical_zones_ranks <- NHP_cortical_zones_ranks
       rm(NHP_cortical_zones_ranks)
       unique_genes <- cortical_zones_ranks$gene_symbol
       
-      load('./data/processed/NHP_cortical_zones_expression_matrix.Rdata',
-           verbose = TRUE)
+      load(here("data","processed", "NHP_cortical_zones_expression_matrix.Rdata"), verbose = TRUE)
       tidy_expression <- NHP_cortical_zones_expression_matrix %>%
         gather(key = zones, value = expression,-gene_symbol)
       
       #target_gene_symbols <- 'NHP'
-      
-      cleaned_gene_list <-
-        convert2nhp(input_genes = cleaned_gene_list, in_species = input$species)
+      cleaned_gene_list <- convert2nhp(input_genes = cleaned_gene_list, in_species = input$species)
+      background_cleaned_gene_list <- convert2nhp(input_genes = background_cleaned_gene_list, in_species = input$species)
+    }
+    
+    if (length(background_cleaned_gene_list) == 1 && background_cleaned_gene_list == "") {
+      gene_universe <- unique_genes
+    } else { #if given a background
+      gene_universe <- background_cleaned_gene_list
+      cortical_zones_ranks %<>% filter(gene_symbol %in% gene_universe)
+      cortical_zones_ranks %<>% mutate_if(is.numeric, rank)
     }
     
     #cleaned_gene_list <- isolate(process_input_genes(input$genelist))
@@ -132,9 +147,9 @@ server <- function(input, output) {
     forIndices %<>% mutate(isTargetGene = gene_symbol %in% cleaned_gene_list)
     targetIndices <- forIndices$isTargetGene
     
+    
     # only columns from cortical zones remain in df
-    df <- cortical_zones_ranks %>%
-      select(-gene_symbol)
+    df <- cortical_zones_ranks %>% select(-gene_symbol)
     
     AUROC <- map_df(df, auroc_analytic, targetIndices)
     wilcox_tests <- map_df(df, apply_MWU, targetIndices)
@@ -193,6 +208,9 @@ server <- function(input, output) {
         sum(cleaned_gene_list %in% unique_genes),
         "of",
         length(cleaned_gene_list)
+      ))
+      cat(paste(
+        "\nBackground genes:", nrow(cortical_zones_ranks)
       ))
     })
     
