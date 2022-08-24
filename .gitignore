@@ -87,3 +87,5 @@ venv.bak/
 processed_developmental_zones.Rdata
 rsconnect
 .Rhistory
+
+.DS_Store
