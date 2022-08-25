@@ -3,10 +3,6 @@ string_processing.R
 AUCFunction.R
 app.R
 /data/processed/NHP_cortical_zones_expression_matrix.Rdata
-/data/processed/NHP_cortical_zones_expression_matrix.csv
 /data/processed/NHP_cortical_zones_ranks.Rdata
-/data/processed/NHP_cortical_zones_ranks.csv
 /data/processed/developing_cortical_zones_expression_matrix.Rdata
-/data/processed/developing_cortical_zones_expression_matrix.csv
 /data/processed/developing_cortical_zones_ranks.Rdata
-/data/processed/developing_cortical_zones_ranks.csv

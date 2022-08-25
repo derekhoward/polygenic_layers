@@ -125,15 +125,17 @@ server <- function(input, output) {
       cleaned_gene_list <- convert2nhp(input_genes = cleaned_gene_list, in_species = input$species)
       background_cleaned_gene_list <- convert2nhp(input_genes = background_cleaned_gene_list, in_species = input$species)
     }
+    print(background_cleaned_gene_list)
     
-    if (length(background_cleaned_gene_list) == 1 && background_cleaned_gene_list == "") {
+    gene_universe <- NULL
+    if ((length(background_cleaned_gene_list) == 1 && background_cleaned_gene_list == "") || length(background_cleaned_gene_list) ==0) {
       gene_universe <- unique_genes
     } else { #if given a background
       gene_universe <- background_cleaned_gene_list
       cortical_zones_ranks %<>% filter(gene_symbol %in% gene_universe)
       cortical_zones_ranks %<>% mutate_if(is.numeric, rank)
     }
-    
+
     #cleaned_gene_list <- isolate(process_input_genes(input$genelist))
     #if (input$species == 'Mouse') {
     #  cleaned_gene_list <- convert_genes(cleaned_gene_list)
@@ -146,8 +148,7 @@ server <- function(input, output) {
     names(forIndices) <- 'gene_symbol'
     forIndices %<>% mutate(isTargetGene = gene_symbol %in% cleaned_gene_list)
     targetIndices <- forIndices$isTargetGene
-    
-    
+
     # only columns from cortical zones remain in df
     df <- cortical_zones_ranks %>% select(-gene_symbol)
     
